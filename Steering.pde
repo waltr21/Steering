@@ -4,6 +4,7 @@ float turn = 0;
 
 void setup(){
     size(900,900, P2D);
+    frameRate(60);
     myCars = new ArrayList<Car>();
     obs = new ArrayList<Obstacle>();
     for (int i = 0; i < 1; i++){
@@ -12,7 +13,7 @@ void setup(){
     for (int i = 0; i < 5; i++){
         obs.add(new Obstacle(random(20,width-20), random(20,height-20), random(10, 100)));
     }
-    for (Car c : cars){
+    for (Car c : myCars){
         c.giveObs(obs);
     }
 }

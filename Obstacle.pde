@@ -15,6 +15,10 @@ public class Obstacle{
         return pos.y;
     }
 
+    public float getSize(){
+        return size;
+    }
+
     public void display(){
         ellipseMode(CENTER);
         noStroke();
