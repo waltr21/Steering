@@ -83,7 +83,7 @@ public class Car{
             return total / sum;
         }
 
-        return 0;
+        return 0; 
     }
 
     public void display(){
