@@ -38,6 +38,7 @@ public void draw(){
     background(51,51,51);
     displayCars();
     displayObstacles();
+    detectHit();
 }
 
 public void displayCars(){
@@ -46,6 +47,20 @@ public void displayCars(){
         c.display();
         c.travel();
         c.bound();
+    }
+}
+
+public void detectHit(){
+    for (int i = myCars.size() - 1; i >= 0; i--){
+        Car c = myCars.get(i);
+        float tempCarSize = c.getSize()/2;
+        for (Obstacle o : obs){
+            float tempObSize = o.getSize()/2;
+            float d = dist(c.getX(), c.getY(), o.getX(), o.getY());
+            if (d < tempObSize + tempCarSize){
+                myCars.remove(i);
+            }
+        }
     }
 }
 
@@ -91,8 +106,8 @@ public class Car{
         displaySensor = true;
         sensors = new ArrayList<Sensor>();
         sensors.add(new Sensor(90, 60, 0, 1));
-        sensors.add(new Sensor(90, 60, 0.6f, 1));
-        sensors.add(new Sensor(90, 60, -0.6f, 1));
+        // sensors.add(new Sensor(90, 60, 0.6, 1));
+        // sensors.add(new Sensor(90, 60, -0.6, 1));
 
         rate = 0.05f;
     }
@@ -219,6 +234,18 @@ public class Car{
 
     public void adjustDisplay(){
         displaySensor = !displaySensor;
+    }
+
+    public float getX(){
+        return pos.x;
+    }
+
+    public float getY(){
+        return pos.y;
+    }
+
+    public float getSize(){
+        return size;
     }
 
     /**
@@ -362,6 +389,7 @@ public class Sensor{
         popMatrix();
 
     }
+ 
 }
   public void settings() {  size(900,900, P2D); }
   static public void main(String[] passedArgs) {

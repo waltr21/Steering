@@ -22,14 +22,31 @@ void draw(){
     background(51,51,51);
     displayCars();
     displayObstacles();
+    detectHit();
 }
 
 void displayCars(){
-    myCars.get(0).turn(turn);
+    if (myCars.size() > 0)
+        myCars.get(0).turn(turn);
+    
     for (Car c : myCars){
         c.display();
         c.travel();
         c.bound();
+    }
+}
+
+void detectHit(){
+    for (int i = myCars.size() - 1; i >= 0; i--){
+        Car c = myCars.get(i);
+        float tempCarSize = c.getSize()/2;
+        for (Obstacle o : obs){
+            float tempObSize = o.getSize()/2;
+            float d = dist(c.getX(), c.getY(), o.getX(), o.getY());
+            if (d < tempObSize + tempCarSize){
+                myCars.remove(i);
+            }
+        }
     }
 }
 
