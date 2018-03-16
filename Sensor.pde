@@ -14,12 +14,20 @@ public class Sensor{
         obs = new ArrayList<Obstacle>();
     }
 
+    /**
+     * Give the sensor a reference of each of the obstacles in the world.
+     * @param newObs ArrayList of Obstacles in the given world.
+     */
     public void giveObs(ArrayList<Obstacle> newObs){
         for (Obstacle o : newObs){
             obs.add(o);
         }
     }
 
+    /**
+     * Gives the
+     * @return [description]
+     */
     public AngleWeight getDesiredAngle(){
         float min = 999999;
         Obstacle closest = null;
@@ -54,7 +62,7 @@ public class Sensor{
 
 
 
-    public void display(float x, float y, float a){
+    public void display(float x, float y, float a, boolean ds){
         carAngle = a;
 
         //Display the sensor line (red)
@@ -62,7 +70,8 @@ public class Sensor{
         translate(x, y);
         rotate(angle + carAngle);
         stroke(256 ,0 ,0);
-        line(0, 0, length, 0);
+        if (ds)
+            line(0, 0, length, 0);
         popMatrix();
 
         //Find the x and y increments for the center point of the circle.
@@ -77,8 +86,10 @@ public class Sensor{
         noFill();
         stroke(0,50,255);
         ellipseMode(CENTER);
-        ellipse(0, 0, range, range);
+        if (ds)
+            ellipse(0, 0, range, range);
         popMatrix();
 
     }
+
 }

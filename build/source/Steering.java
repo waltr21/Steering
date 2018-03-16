@@ -23,7 +23,7 @@ public void setup(){
     frameRate(60);
     myCars = new ArrayList<Car>();
     obs = new ArrayList<Obstacle>();
-    for (int i = 0; i < 1; i++){
+    for (int i = 0; i < 5; i++){
         myCars.add(new Car());
     }
     for (int i = 0; i < 5; i++){
@@ -60,8 +60,16 @@ public void keyPressed(){
         turn = -0.1f;
     }
 
-    if (keyCode == RIGHT)
+    if (keyCode == RIGHT){
         turn = 0.1f;
+    }
+
+    if (key == ' '){
+        for (Car c : myCars){
+            c.adjustDisplay();
+        }
+    }
+
 }
 
 public void keyReleased(){
@@ -69,7 +77,8 @@ public void keyReleased(){
 }
 public class Car{
     private PVector pos;
-    private float angle, acceleration, size, rate, maxSpeed;
+    private float angle, acceleration, size, rate, maxSpeed, maxTurnRad;
+    private boolean displaySensor;
     private ArrayList<Sensor> sensors;
 
     public Car(){
@@ -77,12 +86,20 @@ public class Car{
         size = 20;
         angle = random(-PI, PI);
         acceleration = 0;
-        maxSpeed = 1;
+        maxSpeed = 3;
+        maxTurnRad = 0.1f;
+        displaySensor = true;
         sensors = new ArrayList<Sensor>();
-        sensors.add(new Sensor(90, 60, -PI/2, 1));
+        sensors.add(new Sensor(90, 60, 0, 1));
+        sensors.add(new Sensor(90, 60, 0.6f, 1));
+        sensors.add(new Sensor(90, 60, -0.6f, 1));
+
         rate = 0.05f;
     }
 
+    /**
+     * Travel in the direction of the current car's angle.
+     */
     public void travel(){
         //Direction of travel.
         PVector velocity = PVector.fromAngle(angle);
@@ -99,14 +116,24 @@ public class Car{
         velocity.mult(acceleration);
 
         pos.add(velocity);
+
+        // Turn based on our
+        turn(averageTurn());
     }
 
+    /**
+     * Give each sensor an array of the objects in the world.
+     * @param newObs [description]
+     */
     public void giveObs(ArrayList<Obstacle> newObs){
         for (Sensor s : sensors){
             s.giveObs(newObs);
         }
     }
 
+    /**
+     * Keep the car in bounds by sending it to the other side of the box if out of bounds.
+     */
     public void bound(){
         //Bound the X barriers
         if (pos.x - size/2 > width){
@@ -125,36 +152,78 @@ public class Car{
         }
     }
 
+    /**
+     * Turns the car based on an input angle.
+     * @param a Angle to turn.
+     */
     public void turn(float a){
         angle += a;
-        if (a > 0 || a < 0)
-            acceleration -= rate + 0.03f;
 
+        // Bring down the acceleration if we are turning more than 0 degrees.
+        if (a > 0 || a < 0)
+            acceleration -= rate + (0.05f * (a/maxTurnRad));
+
+        // Limit the total angle to be between 0 and two pi
         if (angle > TWO_PI)
             angle = angle - TWO_PI;
         if (angle < 0)
             angle = TWO_PI + angle;
     }
 
+    /**
+     * Calculates the average of all of the desired angles from each of the sensors
+     * based on their weights.
+     * @return Final angle the car should desire to turn to as a float.
+     */
     public float averageTurn(){
         float total = 0;
+        float avgWeight = 0;
         int sum = 0;
         for (Sensor s : sensors){
             AngleWeight temp = s.getDesiredAngle();
             // Create the weight to multiply the angle by (int so we
             // can record the sum for averaging)
             int newWeight = PApplet.parseInt(temp.weight * 100);
+            avgWeight += temp.weight;
             sum += newWeight;
             total += temp.angle * newWeight;
         }
 
         if (sum > 0){
-            return total / sum;
-        }
+            //Angle we want to turn.
+            //This will add up to be the average of the opposites of each of our sensors.
+            float totalAng = total / sum;
+            avgWeight = avgWeight / sensors.size();
 
+            //Display the desired angle
+            if (displaySensor){
+                pushMatrix();
+                translate(pos.x, pos.y);
+                noFill();
+                stroke(246, 91, 255);
+                rotate(totalAng + angle);
+                line(0, 0, 70, 0);
+                popMatrix();
+            }
+
+            //If our turn is greater than PI then we should turn left becuase it
+            // is shorter. (Couldn't use the actual PI variable for rounding issues)
+            if (totalAng > 3.1415f)
+                return -maxTurnRad * avgWeight;
+            else
+                return maxTurnRad * avgWeight;
+        }
+        // Turn by 0 if we dont detect any objects.
         return 0;
     }
 
+    public void adjustDisplay(){
+        displaySensor = !displaySensor;
+    }
+
+    /**
+     * Displays the car and each of the sensors.
+     */
     public void display(){
 
         pushMatrix();
@@ -167,13 +236,8 @@ public class Car{
         popMatrix();
 
         for (Sensor s : sensors){
-            s.display(pos.x, pos.y, angle);
+            s.display(pos.x, pos.y, angle, displaySensor);
         }
-
-        float tempTurn = averageTurn();
-        turn(tempTurn);
-        // System.out.println("Current angle: " + angle);
-        // System.out.println("Average: " + tempTurn);
     }
 
 }
@@ -221,12 +285,20 @@ public class Sensor{
         obs = new ArrayList<Obstacle>();
     }
 
+    /**
+     * Give the sensor a reference of each of the obstacles in the world.
+     * @param newObs ArrayList of Obstacles in the given world.
+     */
     public void giveObs(ArrayList<Obstacle> newObs){
         for (Obstacle o : newObs){
             obs.add(o);
         }
     }
 
+    /**
+     * Gives the
+     * @return [description]
+     */
     public AngleWeight getDesiredAngle(){
         float min = 999999;
         Obstacle closest = null;
@@ -247,7 +319,9 @@ public class Sensor{
             // Turn weight is based on how close the obstacle is to the sensor.
             // Farther = smaller weight. Smaller weight = less aggressive turn.
             float distanceWeight = (minDistance - min) / minDistance;
+            // This is the angle that we want out car to be traveling at (Opposite of our current angle)
             float goalAngle = (angle + carAngle) + PI;
+            // Get the difference between the goal and current angle. Pack into angle weight and return.
             return new AngleWeight(abs(carAngle - goalAngle), distanceWeight * weight);
 
         }
@@ -259,7 +333,7 @@ public class Sensor{
 
 
 
-    public void display(float x, float y, float a){
+    public void display(float x, float y, float a, boolean ds){
         carAngle = a;
 
         //Display the sensor line (red)
@@ -267,7 +341,8 @@ public class Sensor{
         translate(x, y);
         rotate(angle + carAngle);
         stroke(256 ,0 ,0);
-        line(0, 0, length, 0);
+        if (ds)
+            line(0, 0, length, 0);
         popMatrix();
 
         //Find the x and y increments for the center point of the circle.
@@ -282,7 +357,8 @@ public class Sensor{
         noFill();
         stroke(0,50,255);
         ellipseMode(CENTER);
-        ellipse(0, 0, range, range);
+        if (ds)
+            ellipse(0, 0, range, range);
         popMatrix();
 
     }

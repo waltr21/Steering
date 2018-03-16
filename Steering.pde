@@ -7,7 +7,7 @@ void setup(){
     frameRate(60);
     myCars = new ArrayList<Car>();
     obs = new ArrayList<Obstacle>();
-    for (int i = 0; i < 1; i++){
+    for (int i = 0; i < 5; i++){
         myCars.add(new Car());
     }
     for (int i = 0; i < 5; i++){
@@ -44,8 +44,16 @@ void keyPressed(){
         turn = -0.1;
     }
 
-    if (keyCode == RIGHT)
+    if (keyCode == RIGHT){
         turn = 0.1;
+    }
+
+    if (key == ' '){
+        for (Car c : myCars){
+            c.adjustDisplay();
+        }
+    }
+
 }
 
 void keyReleased(){
