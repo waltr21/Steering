@@ -5,7 +5,7 @@ public class Car{
     private ArrayList<Sensor> sensors;
 
     public Car(){
-        pos = new PVector(width/2, height/2);
+        pos = new PVector(0, 0);
         size = 20;
         angle = random(-PI, PI);
         acceleration = 0;
@@ -14,6 +14,8 @@ public class Car{
         displaySensor = true;
         sensors = new ArrayList<Sensor>();
         sensors.add(new Sensor(90, 60, 0, 1));
+        sensors.add(new Sensor(90, 60, PI/4, 1));
+        sensors.add(new Sensor(90, 60, -PI/4, 1));
         rate = 0.05;
     }
 

@@ -26,8 +26,8 @@ public void setup(){
     for (int i = 0; i < 5; i++){
         myCars.add(new Car());
     }
-    for (int i = 0; i < 5; i++){
-        obs.add(new Obstacle(random(20,width-20), random(20,height-20), random(10, 100)));
+    for (int i = 0; i < 8; i++){
+        obs.add(new Obstacle(random(200, width - 200), random(200, height-200), random(10, 100)));
     }
     for (Car c : myCars){
         c.giveObs(obs);
@@ -42,7 +42,9 @@ public void draw(){
 }
 
 public void displayCars(){
-    myCars.get(0).turn(turn);
+    if (myCars.size() > 0)
+        myCars.get(0).turn(turn);
+
     for (Car c : myCars){
         c.display();
         c.travel();
@@ -67,6 +69,8 @@ public void detectHit(){
 public void displayObstacles(){
     for (Obstacle o : obs){
         o.display();
+        o.bound();
+        o.travel();
     }
 }
 
@@ -97,7 +101,7 @@ public class Car{
     private ArrayList<Sensor> sensors;
 
     public Car(){
-        pos = new PVector(width/2, height/2);
+        pos = new PVector(0, 0);
         size = 20;
         angle = random(-PI, PI);
         acceleration = 0;
@@ -106,9 +110,8 @@ public class Car{
         displaySensor = true;
         sensors = new ArrayList<Sensor>();
         sensors.add(new Sensor(90, 60, 0, 1));
-        // sensors.add(new Sensor(90, 60, 0.6, 1));
-        // sensors.add(new Sensor(90, 60, -0.6, 1));
-
+        sensors.add(new Sensor(90, 60, PI/4, 1));
+        sensors.add(new Sensor(90, 60, -PI/4, 1));
         rate = 0.05f;
     }
 
@@ -269,31 +272,76 @@ public class Car{
 
 }
 public class Obstacle{
-    private PVector pos;
-    private float size;
+    private PVector pos, velocity;
+    private float size, angle, speed;
 
     public Obstacle(float x, float y, float s){
         pos = new PVector(x, y);
         size = s;
+        speed = 0.4f;
+        angle = random(-PI, PI);
     }
 
+    /**
+     * Get the X location of the obstacle
+     * @return X position as a float
+     */
     public float getX(){
         return pos.x;
     }
 
+    /**
+     * Get the Y location of the obstacle
+     * @return Y position as a float
+     */
     public float getY(){
         return pos.y;
     }
 
+    /**
+     * Get the size of the obstacle
+     * @return Size of the obstacle as a float
+     */
     public float getSize(){
         return size;
     }
 
+    /**
+     * Move the objects in the desired direction.
+     */
+    public void travel(){
+        velocity = PVector.fromAngle(angle);
+        velocity.mult(speed);
+        pos.add(velocity);
+    }
+
+    /**
+     * If the obstacle is out of bounds, then a random (appropriate) angle is chosen for the obstavle
+     * to travel out.
+     */
+    public void bound(){
+        if (pos.x < 200){
+            angle = random(-PI/2, PI/2);
+        }
+        if (pos.x > width - 200){
+            angle = random(PI/2, PI*(3/2));
+        }
+        if (pos.y < 200){
+            angle = random(0, PI);
+        }
+        if (pos.y > height - 200){
+            angle = random(PI, TWO_PI);
+        }
+    }
+
     public void display(){
+        pushMatrix();
         ellipseMode(CENTER);
         noStroke();
         fill(100, 100, 100);
-        ellipse(pos.x, pos.y, size, size);
+        translate(pos.x, pos.y);
+        ellipse(0, 0, size, size);
+        popMatrix();
     }
 }
 public class Sensor{
@@ -359,7 +407,13 @@ public class Sensor{
     }
 
 
-
+    /**
+     * Update and show the sensor
+     * @param x  X location of the car
+     * @param y  Y location of the car
+     * @param a  Current angle of the car
+     * @param ds Display sensor of the car or not.
+     */
     public void display(float x, float y, float a, boolean ds){
         carAngle = a;
 
@@ -389,7 +443,7 @@ public class Sensor{
         popMatrix();
 
     }
- 
+
 }
   public void settings() {  size(900,900, P2D); }
   static public void main(String[] passedArgs) {

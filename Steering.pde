@@ -10,8 +10,8 @@ void setup(){
     for (int i = 0; i < 5; i++){
         myCars.add(new Car());
     }
-    for (int i = 0; i < 5; i++){
-        obs.add(new Obstacle(random(20,width-20), random(20,height-20), random(10, 100)));
+    for (int i = 0; i < 8; i++){
+        obs.add(new Obstacle(random(200, width - 200), random(200, height-200), random(10, 100)));
     }
     for (Car c : myCars){
         c.giveObs(obs);
@@ -28,7 +28,7 @@ void draw(){
 void displayCars(){
     if (myCars.size() > 0)
         myCars.get(0).turn(turn);
-    
+
     for (Car c : myCars){
         c.display();
         c.travel();
@@ -53,6 +53,8 @@ void detectHit(){
 void displayObstacles(){
     for (Obstacle o : obs){
         o.display();
+        o.bound();
+        o.travel();
     }
 }
 
