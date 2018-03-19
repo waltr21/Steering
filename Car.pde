@@ -14,9 +14,6 @@ public class Car{
         displaySensor = true;
         sensors = new ArrayList<Sensor>();
         sensors.add(new Sensor(90, 60, 0, 1));
-        // sensors.add(new Sensor(90, 60, 0.6, 1));
-        // sensors.add(new Sensor(90, 60, -0.6, 1));
-
         rate = 0.05;
     }
 

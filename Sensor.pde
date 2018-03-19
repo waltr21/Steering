@@ -61,7 +61,13 @@ public class Sensor{
     }
 
 
-
+    /**
+     * Update and show the sensor
+     * @param x  X location of the car
+     * @param y  Y location of the car
+     * @param a  Current angle of the car
+     * @param ds Display sensor of the car or not.
+     */
     public void display(float x, float y, float a, boolean ds){
         carAngle = a;
 
@@ -91,5 +97,5 @@ public class Sensor{
         popMatrix();
 
     }
- 
+
 }
