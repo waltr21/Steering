@@ -50,7 +50,7 @@ public class Obstacle{
         if (pos.x < 200){
             angle = random(-PI/2, PI/2);
         }
-        if (pos.x > width - 200){
+        if (pos.x > (width - WIDTH_BOUND) - 200){
             angle = random(PI/2, PI*(3/2));
         }
         if (pos.y < 200){

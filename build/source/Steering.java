@@ -17,17 +17,18 @@ public class Steering extends PApplet {
 ArrayList<Car> myCars;
 ArrayList<Obstacle> obs;
 float turn = 0;
+static final int WIDTH_BOUND = 400;
 
 public void setup(){
     
     frameRate(60);
     myCars = new ArrayList<Car>();
     obs = new ArrayList<Obstacle>();
-    for (int i = 0; i < 5; i++){
+    for (int i = 0; i < 30; i++){
         myCars.add(new Car());
     }
     for (int i = 0; i < 8; i++){
-        obs.add(new Obstacle(random(200, width - 200), random(200, height-200), random(10, 100)));
+        obs.add(new Obstacle(random(200, (width - WIDTH_BOUND) - 200), random(200, height-200), random(10, 100)));
     }
     for (Car c : myCars){
         c.giveObs(obs);
@@ -36,6 +37,7 @@ public void setup(){
 
 public void draw(){
     background(51,51,51);
+    showMenu();
     displayCars();
     displayObstacles();
     detectHit();
@@ -64,6 +66,13 @@ public void detectHit(){
             }
         }
     }
+}
+
+public void showMenu(){
+    noStroke();
+    rectMode(CORNER);
+    fill(188, 200, 219);
+    rect(width - WIDTH_BOUND, 0, WIDTH_BOUND, height);
 }
 
 public void displayObstacles(){
@@ -97,26 +106,50 @@ public void keyReleased(){
 public class Car{
     private PVector pos;
     private float angle, acceleration, size, rate, maxSpeed, maxTurnRad;
+    private float distanceTraveled, closetCall;
     private boolean displaySensor;
     private ArrayList<Sensor> sensors;
+    private ArrayList<Obstacle> obs;
 
+    /**
+     * Constructor for the car class.
+     */
     public Car(){
+        initVariables();
+
+        int numSensors = PApplet.parseInt(random(1, 6));
+        for (int i = 0; i < numSensors; i++){
+            float tempLength = random(30, 150);
+            float tempRange = random(10, 80);
+            float tempAngle = random(-PI, PI);
+            float tempWeight = random(0, 4);
+            sensors.add(new Sensor(tempLength, tempRange, tempAngle, tempWeight));
+        }
+    }
+
+    public Car(ArrayList<Sensor> s){
+
+    }
+
+    public void initVariables(){
         pos = new PVector(0, 0);
         size = 20;
-        angle = random(-PI, PI);
+        angle = PI/4;
         acceleration = 0;
         maxSpeed = 3;
         maxTurnRad = 0.1f;
-        displaySensor = true;
+        displaySensor = false;
+        distanceTraveled = 0;
+        closetCall = 999999;
         sensors = new ArrayList<Sensor>();
-        sensors.add(new Sensor(90, 60, 0, 1));
-        sensors.add(new Sensor(90, 60, PI/4, 1));
-        sensors.add(new Sensor(90, 60, -PI/4, 1));
+        obs = new ArrayList<Obstacle>();
         rate = 0.05f;
     }
 
     /**
-     * Travel in the direction of the current car's angle.
+     * Travel in the direction of the current car's angle. Also calculate the
+     * distance traveled with the acceleration and calculate the closest distance to
+     * an obstacle.
      */
     public void travel(){
         //Direction of travel.
@@ -137,6 +170,13 @@ public class Car{
 
         // Turn based on our
         turn(averageTurn());
+
+        //Measure the distance traveled my incrementing by the current acceleration
+        // (Cars that are turning more efficiently will be traveling faster giving them
+        // a better fitness score)
+        distanceTraveled += acceleration;
+
+        calculateClosest();
     }
 
     /**
@@ -145,6 +185,7 @@ public class Car{
      */
     public void giveObs(ArrayList<Obstacle> newObs){
         for (Sensor s : sensors){
+
             s.giveObs(newObs);
         }
     }
@@ -154,11 +195,11 @@ public class Car{
      */
     public void bound(){
         //Bound the X barriers
-        if (pos.x - size/2 > width){
-            pos.x = 0 - size/2;
+        if (pos.x - size > width - WIDTH_BOUND){
+            pos.x = 0 - size;
         }
-        else if (pos.x + size/2 < 0){
-            pos.x = width + size/2;
+        else if (pos.x + size < 0){
+            pos.x = (width - WIDTH_BOUND) + size;
         }
 
         //Bound the Y barriers
@@ -235,6 +276,25 @@ public class Car{
         return 0;
     }
 
+    /**
+     * Calculates the closest distance the car gets to an obstacle.
+     */
+    public void calculateClosest(){
+        for (Obstacle o : obs){
+            float tempDistance = dist(o.getX(), o.getY(), pos.x, pos.y);
+            if (tempDistance < closetCall)
+                closetCall = tempDistance;
+        }
+    }
+
+    /**
+     * Create a copy of this car object without reference
+     * @return The new car copy.
+     */
+    public Car copy(){
+        return new Car();
+    }
+
     public void adjustDisplay(){
         displaySensor = !displaySensor;
     }
@@ -249,6 +309,10 @@ public class Car{
 
     public float getSize(){
         return size;
+    }
+
+    public float getFitness(float farthest){
+        return distanceTraveled * (closetCall / farthest);
     }
 
     /**
@@ -323,7 +387,7 @@ public class Obstacle{
         if (pos.x < 200){
             angle = random(-PI/2, PI/2);
         }
-        if (pos.x > width - 200){
+        if (pos.x > (width - WIDTH_BOUND) - 200){
             angle = random(PI/2, PI*(3/2));
         }
         if (pos.y < 200){
@@ -334,6 +398,9 @@ public class Obstacle{
         }
     }
 
+    /**
+     * Draw/translate the obstacle as a circle at a specific X and Y.
+     */
     public void display(){
         pushMatrix();
         ellipseMode(CENTER);
@@ -445,7 +512,7 @@ public class Sensor{
     }
 
 }
-  public void settings() {  size(900,900, P2D); }
+  public void settings() {  size(1300, 900, P2D); }
   static public void main(String[] passedArgs) {
     String[] appletArgs = new String[] { "Steering" };
     if (passedArgs != null) {

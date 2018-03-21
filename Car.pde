@@ -1,26 +1,50 @@
 public class Car{
     private PVector pos;
     private float angle, acceleration, size, rate, maxSpeed, maxTurnRad;
+    private float distanceTraveled, closetCall;
     private boolean displaySensor;
     private ArrayList<Sensor> sensors;
+    private ArrayList<Obstacle> obs;
 
+    /**
+     * Constructor for the car class.
+     */
     public Car(){
+        initVariables();
+
+        int numSensors = int(random(1, 6));
+        for (int i = 0; i < numSensors; i++){
+            float tempLength = random(30, 150);
+            float tempRange = random(10, 80);
+            float tempAngle = random(-PI, PI);
+            float tempWeight = random(0, 4);
+            sensors.add(new Sensor(tempLength, tempRange, tempAngle, tempWeight));
+        }
+    }
+
+    public Car(ArrayList<Sensor> s){
+
+    }
+
+    public void initVariables(){
         pos = new PVector(0, 0);
         size = 20;
-        angle = random(-PI, PI);
+        angle = PI/4;
         acceleration = 0;
         maxSpeed = 3;
         maxTurnRad = 0.1;
-        displaySensor = true;
+        displaySensor = false;
+        distanceTraveled = 0;
+        closetCall = 999999;
         sensors = new ArrayList<Sensor>();
-        sensors.add(new Sensor(90, 60, 0, 1));
-        sensors.add(new Sensor(90, 60, PI/4, 1));
-        sensors.add(new Sensor(90, 60, -PI/4, 1));
+        obs = new ArrayList<Obstacle>();
         rate = 0.05;
     }
 
     /**
-     * Travel in the direction of the current car's angle.
+     * Travel in the direction of the current car's angle. Also calculate the
+     * distance traveled with the acceleration and calculate the closest distance to
+     * an obstacle.
      */
     public void travel(){
         //Direction of travel.
@@ -41,6 +65,13 @@ public class Car{
 
         // Turn based on our
         turn(averageTurn());
+
+        //Measure the distance traveled my incrementing by the current acceleration
+        // (Cars that are turning more efficiently will be traveling faster giving them
+        // a better fitness score)
+        distanceTraveled += acceleration;
+
+        calculateClosest();
     }
 
     /**
@@ -49,6 +80,7 @@ public class Car{
      */
     public void giveObs(ArrayList<Obstacle> newObs){
         for (Sensor s : sensors){
+
             s.giveObs(newObs);
         }
     }
@@ -58,11 +90,11 @@ public class Car{
      */
     public void bound(){
         //Bound the X barriers
-        if (pos.x - size/2 > width){
+        if (pos.x - size/2 > width - WIDTH_BOUND){
             pos.x = 0 - size/2;
         }
         else if (pos.x + size/2 < 0){
-            pos.x = width + size/2;
+            pos.x = (width - WIDTH_BOUND) + size/2;
         }
 
         //Bound the Y barriers
@@ -139,6 +171,25 @@ public class Car{
         return 0;
     }
 
+    /**
+     * Calculates the closest distance the car gets to an obstacle.
+     */
+    public void calculateClosest(){
+        for (Obstacle o : obs){
+            float tempDistance = dist(o.getX(), o.getY(), pos.x, pos.y);
+            if (tempDistance < closetCall)
+                closetCall = tempDistance;
+        }
+    }
+
+    /**
+     * Create a copy of this car object without reference
+     * @return The new car copy.
+     */
+    public Car copy(){
+        return new Car();
+    }
+
     public void adjustDisplay(){
         displaySensor = !displaySensor;
     }
@@ -153,6 +204,10 @@ public class Car{
 
     public float getSize(){
         return size;
+    }
+
+    public float getFitness(float farthest){
+        return distanceTraveled * (closetCall / farthest);
     }
 
     /**

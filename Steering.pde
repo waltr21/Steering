@@ -1,17 +1,18 @@
 ArrayList<Car> myCars;
 ArrayList<Obstacle> obs;
 float turn = 0;
+static final int WIDTH_BOUND = 400;
 
 void setup(){
-    size(900,900, P2D);
+    size(1300, 900, P2D);
     frameRate(60);
     myCars = new ArrayList<Car>();
     obs = new ArrayList<Obstacle>();
-    for (int i = 0; i < 5; i++){
+    for (int i = 0; i < 30; i++){
         myCars.add(new Car());
     }
     for (int i = 0; i < 8; i++){
-        obs.add(new Obstacle(random(200, width - 200), random(200, height-200), random(10, 100)));
+        obs.add(new Obstacle(random(200, (width - WIDTH_BOUND) - 200), random(200, height-200), random(10, 100)));
     }
     for (Car c : myCars){
         c.giveObs(obs);
@@ -20,6 +21,7 @@ void setup(){
 
 void draw(){
     background(51,51,51);
+    showMenu();
     displayCars();
     displayObstacles();
     detectHit();
@@ -48,6 +50,13 @@ void detectHit(){
             }
         }
     }
+}
+
+void showMenu(){
+    noStroke();
+    rectMode(CORNER);
+    fill(188, 200, 219);
+    rect(width - WIDTH_BOUND, 0, WIDTH_BOUND, height);
 }
 
 void displayObstacles(){
