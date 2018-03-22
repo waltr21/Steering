@@ -25,12 +25,13 @@ public class Sensor{
     }
 
     /**
-     * Gives the
+     * Gives the desired angle and weight the sensor wants to turn.
      * @return [description]
      */
     public AngleWeight getDesiredAngle(){
         float min = 999999;
         Obstacle closest = null;
+
         //Find the closest obstacle.
         for (Obstacle o : obs){
             float current = dist(o.getX(), o.getY(), sensorX, sensorY);
@@ -39,7 +40,6 @@ public class Sensor{
                 closest = o;
             }
         }
-
 
         float minDistance = (range/2) + (closest.getSize()/2);
 
@@ -60,6 +60,9 @@ public class Sensor{
         }
     }
 
+    public Sensor copy(){
+        return new Sensor(length, range, angle, weight);
+    }
 
     /**
      * Update and show the sensor
@@ -95,7 +98,5 @@ public class Sensor{
         if (ds)
             ellipse(0, 0, range, range);
         popMatrix();
-
     }
-
 }

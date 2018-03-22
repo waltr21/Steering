@@ -1,11 +1,12 @@
 public class Obstacle{
     private PVector pos, velocity;
-    private float size, angle, speed;
+    private float size, angle, speed, boundRange;
 
     public Obstacle(float x, float y, float s){
         pos = new PVector(x, y);
         size = s;
-        speed = 0.4;
+        speed = 0.1;
+        boundRange = 150;
         angle = random(-PI, PI);
     }
 
@@ -47,16 +48,16 @@ public class Obstacle{
      * to travel out.
      */
     public void bound(){
-        if (pos.x < 200){
+        if (pos.x < boundRange){
             angle = random(-PI/2, PI/2);
         }
-        if (pos.x > (width - WIDTH_BOUND) - 200){
+        if (pos.x > (width - WIDTH_BOUND) - boundRange){
             angle = random(PI/2, PI*(3/2));
         }
-        if (pos.y < 200){
+        if (pos.y < boundRange){
             angle = random(0, PI);
         }
-        if (pos.y > height - 200){
+        if (pos.y > height - boundRange){
             angle = random(PI, TWO_PI);
         }
     }

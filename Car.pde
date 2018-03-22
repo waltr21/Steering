@@ -2,43 +2,73 @@ public class Car{
     private PVector pos;
     private float angle, acceleration, size, rate, maxSpeed, maxTurnRad;
     private float distanceTraveled, closetCall;
-    private boolean displaySensor;
+    private boolean displaySensor, isDead;
     private ArrayList<Sensor> sensors;
     private ArrayList<Obstacle> obs;
 
     /**
-     * Constructor for the car class.
+     * Constructor for the car that creates new car with random sensors.
      */
     public Car(){
         initVariables();
-
         int numSensors = int(random(1, 6));
+
         for (int i = 0; i < numSensors; i++){
             float tempLength = random(30, 150);
             float tempRange = random(10, 80);
-            float tempAngle = random(-PI, PI);
+            float tempAngle = random(-PI,PI);
             float tempWeight = random(0, 4);
             sensors.add(new Sensor(tempLength, tempRange, tempAngle, tempWeight));
         }
     }
 
-    public Car(ArrayList<Sensor> s){
+    /**
+     * Constructor for the car class that passes down the sensors from the
+     * parent class.
+     * @param parentSensors ArrayList of sensors from the parent.
+     */
+    public Car(ArrayList<Sensor> parentSensors, boolean mutation){
+        initVariables();
+        for (Sensor s : parentSensors){
+            sensors.add(s);
+        }
 
+        // If the copy is being handed down from a parent.
+        if (mutation){
+            int n = int(random(100));
+            // Five percent chance of mutation
+            if (n < 5){
+                int n1 = int(random(100));
+                // Fifty percent chance of gaining a sensor or losing a sensor.
+                if (n1 > 50){
+                    float tempLength = random(30, 150);
+                    float tempRange = random(10, 80);
+                    float tempAngle = random(-PI,PI);
+                    float tempWeight = random(0, 4);
+                    sensors.add(new Sensor(tempLength, tempRange, tempAngle, tempWeight));
+                }
+                else{
+                    if (sensors.size() > 0)
+                        sensors.remove(sensors.size()-1);
+                }
+            }
+        }
     }
 
     public void initVariables(){
         pos = new PVector(0, 0);
         size = 20;
-        angle = PI/4;
+        angle = random(-PI, PI);
         acceleration = 0;
         maxSpeed = 3;
         maxTurnRad = 0.1;
         displaySensor = false;
+        isDead = false;
         distanceTraveled = 0;
         closetCall = 999999;
+        rate = 0.05;
         sensors = new ArrayList<Sensor>();
         obs = new ArrayList<Obstacle>();
-        rate = 0.05;
     }
 
     /**
@@ -47,31 +77,33 @@ public class Car{
      * an obstacle.
      */
     public void travel(){
-        //Direction of travel.
-        PVector velocity = PVector.fromAngle(angle);
+        if (!isDead){
+            //Direction of travel.
+            PVector velocity = PVector.fromAngle(angle);
 
-        //Limit acceleration
-        if (acceleration > maxSpeed)
-            acceleration = maxSpeed;
-        else if (acceleration < 0)
-            acceleration = 0;
-        else
-            acceleration += rate;
+            //Limit acceleration
+            if (acceleration > maxSpeed)
+                acceleration = maxSpeed;
+            else if (acceleration < -1)
+                acceleration = -1;
+            else
+                acceleration += rate;
 
-        //Give acceleration
-        velocity.mult(acceleration);
+            //Give acceleration
+            velocity.mult(acceleration);
 
-        pos.add(velocity);
+            pos.add(velocity);
 
-        // Turn based on our
-        turn(averageTurn());
+            // Turn based on our
+            turn(averageTurn());
 
-        //Measure the distance traveled my incrementing by the current acceleration
-        // (Cars that are turning more efficiently will be traveling faster giving them
-        // a better fitness score)
-        distanceTraveled += acceleration;
+            //Measure the distance traveled my incrementing by the current acceleration
+            // (Cars that are turning more efficiently will be traveling faster giving them
+            // a better fitness score)
+            distanceTraveled += acceleration;
 
-        calculateClosest();
+            calculateClosest();
+        }
     }
 
     /**
@@ -80,8 +112,10 @@ public class Car{
      */
     public void giveObs(ArrayList<Obstacle> newObs){
         for (Sensor s : sensors){
-
             s.giveObs(newObs);
+        }
+        for (Obstacle o : newObs){
+            obs.add(o);
         }
     }
 
@@ -186,8 +220,12 @@ public class Car{
      * Create a copy of this car object without reference
      * @return The new car copy.
      */
-    public Car copy(){
-        return new Car();
+    public Car copy(boolean mutation){
+        ArrayList<Sensor> sensorCopy = new ArrayList<Sensor>();
+        for (Sensor s : sensors){
+            sensorCopy.add(s.copy());
+        }
+        return new Car(sensorCopy, mutation);
     }
 
     public void adjustDisplay(){
@@ -206,26 +244,39 @@ public class Car{
         return size;
     }
 
+    public float getClosest(){
+        return closetCall;
+    }
+
+    public void setDead(boolean b){
+        isDead = b;
+    }
+
     public float getFitness(float farthest){
         return distanceTraveled * (closetCall / farthest);
+    }
+
+    public ArrayList<Sensor> getSensors(){
+        return sensors;
     }
 
     /**
      * Displays the car and each of the sensors.
      */
     public void display(){
+        if (!isDead){
+            pushMatrix();
+            rectMode(CENTER);
+            translate(pos.x, pos.y);
+            noStroke();
+            fill(0,200,0);
+            rotate(angle);
+            rect(0, 0, size, size);
+            popMatrix();
 
-        pushMatrix();
-        rectMode(CENTER);
-        translate(pos.x, pos.y);
-        noStroke();
-        fill(0,200,0);
-        rotate(angle);
-        rect(0, 0, size, size);
-        popMatrix();
-
-        for (Sensor s : sensors){
-            s.display(pos.x, pos.y, angle, displaySensor);
+            for (Sensor s : sensors){
+                s.display(pos.x, pos.y, angle, displaySensor);
+            }
         }
     }
 
