@@ -1,9 +1,11 @@
 ArrayList<Car> myCars;
+Car displayCar, currentFit;
 ArrayList<Obstacle> obs;
 float turn = 0;
 long timeStamp;
 float maxFit;
-int generationTime, genNum, numCars;
+boolean showSensor;
+int generationTime, genNum, numCars, carsRemaining, survivors;
 static final int WIDTH_BOUND = 400;
 
 void setup(){
@@ -15,11 +17,15 @@ void setup(){
 void reset(){
     myCars = new ArrayList<Car>();
     obs = new ArrayList<Obstacle>();
-    timeStamp = millis();
+    displayCar = null;
+    currentFit = null;
     generationTime = 40000;
     genNum = 0;
     maxFit = 0;
     numCars = 50;
+    carsRemaining = numCars;
+    survivors = 0;
+    showSensor = false;
 
     for (int i = 0; i < numCars; i++){
         myCars.add(new Car());
@@ -30,6 +36,7 @@ void reset(){
     for (Car c : myCars){
         c.giveObs(obs);
     }
+    timeStamp = millis();
 }
 
 void draw(){
@@ -57,7 +64,7 @@ void displayCars(){
 void showMenu(){
     noStroke();
     rectMode(CORNER);
-    fill(120, 120, 120);
+    fill(170, 170, 170);
     rect(width - WIDTH_BOUND, 0, WIDTH_BOUND, height);
 }
 
@@ -70,38 +77,58 @@ void displayObstacles(){
 }
 
 void displayText(){
+    // Find out best fit car.
     float farthest = 0;
     for (Car c : myCars){
-        //System.out.println(c.getClosest());
         if (c.getClosest() > farthest)
             farthest = c.getClosest();
     }
     for (Car c : myCars){
-        if (c.getFitness(farthest) > maxFit)
+        if (c.getFitness(farthest) > maxFit){
             maxFit = c.getFitness(farthest);
+            currentFit = c;
+        }
     }
 
     textSize(20);
     fill(0);
-    String text = "Generation: " + genNum;
-    text += "\nMost Fit: " + round(maxFit);
-    //text += "\nFarthest: " + round(farthest);
-    text(text, width - WIDTH_BOUND + 10, 25);
+    String left = "Generation: " + genNum;
+    left += "\nMost Fit: " + round(maxFit);
+    float percent = (float) survivors / numCars;
+    left += "\nOverall Fitness: " + round(percent * 100.0) + "%";
+    String right = "Time: " + (round(generationTime - (millis() - timeStamp))) / 1000;
+    String mid = "Current Best: ";
+    textAlign(LEFT);
+    text(left, width - WIDTH_BOUND + 10, 25);
+    text(right, width - 100, 25);
+    textAlign(CENTER);
+    text(mid, width - WIDTH_BOUND/2, 200);
+    if (displayCar != null){
+        displayCar.adjustDisplay(true);
+        displayCar.setX(width - WIDTH_BOUND/2);
+        displayCar.setY(400.0);
+        scale(1.5);
+        displayCar.display();
+        scale(1);
+
+    }
 }
 
 void timeGeneration(){
     long tempTime = millis();
-    if ((tempTime - timeStamp) > generationTime || myCars.size() == 0){
+    if ((tempTime - timeStamp) > generationTime || carsRemaining == 0){
         genNum++;
-        //maxFit = 0;
-        System.out.println("Breeding");
+        timeStamp = tempTime;
+        survivors = carsRemaining;
+        displayCar = new Car(currentFit);
         breed();
         maxFit = 0;
-        timeStamp = tempTime;
+        carsRemaining = numCars;
     }
 }
 
 void breed(){
+    // Find the car who stayed the farthest away from the obstacles and get that value
     float farthest = 0;
     for (Car c : myCars){
         if (c.getClosest() > farthest)
@@ -109,20 +136,22 @@ void breed(){
     }
     ArrayList<Car> pool = new ArrayList<Car>();
 
+    // Add each car to the pool depending on their fitness
     for (Car c : myCars){
-        //System.out.println(c.getFitness(farthest) / maxFit);
         int n = int((c.getFitness(farthest) / maxFit) * 100);
-        //System.out.println(n);
         for (int i = 0; i < n; i++){
-            pool.add(c.copy(true));
+            pool.add(c);
         }
     }
 
+    // Clear the old cars
     myCars.clear();
 
+    // Pick a random position in the pool and create a new child car from the
+    // parent.
     for (int i = 0; i < numCars; i++){
         int randomPos = int(random(0, pool.size() - 2));
-        Car newCar = pool.get(randomPos);
+        Car newCar = new Car(pool.get(randomPos));
         newCar.giveObs(obs);
         myCars.add(newCar);
     }
@@ -135,8 +164,9 @@ void detectHit(){
         for (Obstacle o : obs){
             float tempObSize = o.getSize()/2;
             float d = dist(c.getX(), c.getY(), o.getX(), o.getY());
-            if (d < tempObSize + tempCarSize){
+            if (d < tempObSize + tempCarSize && !c.isDead()){
                 c.setDead(true);
+                carsRemaining--;
             }
         }
     }
@@ -155,8 +185,9 @@ void keyPressed(){
         reset();
 
     if (key == ' '){
+        showSensor = !showSensor;
         for (Car c : myCars){
-            c.adjustDisplay();
+            c.adjustDisplay(showSensor);
         }
     }
 

@@ -27,32 +27,30 @@ public class Car{
      * parent class.
      * @param parentSensors ArrayList of sensors from the parent.
      */
-    public Car(ArrayList<Sensor> parentSensors, boolean mutation){
+    public Car(Car parent){
         initVariables();
-        for (Sensor s : parentSensors){
-            sensors.add(s);
+        for (Sensor s : parent.getSensors()){
+            sensors.add(s.copy());
         }
 
-        // If the copy is being handed down from a parent.
-        if (mutation){
-            int n = int(random(100));
-            // Five percent chance of mutation
-            if (n < 5){
-                int n1 = int(random(100));
-                // Fifty percent chance of gaining a sensor or losing a sensor.
-                if (n1 > 50){
-                    float tempLength = random(30, 150);
-                    float tempRange = random(10, 80);
-                    float tempAngle = random(-PI,PI);
-                    float tempWeight = random(0, 4);
-                    sensors.add(new Sensor(tempLength, tempRange, tempAngle, tempWeight));
-                }
-                else{
-                    if (sensors.size() > 0)
-                        sensors.remove(sensors.size()-1);
-                }
+        int n = int(random(100));
+        // Five percent chance of mutation
+        if (n < 5){
+            int n1 = int(random(100));
+            // Fifty percent chance of gaining a sensor or losing a sensor.
+            if (n1 > 50){
+                float tempLength = random(30, 150);
+                float tempRange = random(10, 80);
+                float tempAngle = random(-PI,PI);
+                float tempWeight = random(0, 4);
+                sensors.add(new Sensor(tempLength, tempRange, tempAngle, tempWeight));
+            }
+            else{
+                if (sensors.size() > 0)
+                    sensors.remove(sensors.size()-1);
             }
         }
+
     }
 
     public void initVariables(){
@@ -216,20 +214,8 @@ public class Car{
         }
     }
 
-    /**
-     * Create a copy of this car object without reference
-     * @return The new car copy.
-     */
-    public Car copy(boolean mutation){
-        ArrayList<Sensor> sensorCopy = new ArrayList<Sensor>();
-        for (Sensor s : sensors){
-            sensorCopy.add(s.copy());
-        }
-        return new Car(sensorCopy, mutation);
-    }
-
-    public void adjustDisplay(){
-        displaySensor = !displaySensor;
+    public void adjustDisplay(boolean b){
+        displaySensor = b;
     }
 
     public float getX(){
@@ -238,6 +224,14 @@ public class Car{
 
     public float getY(){
         return pos.y;
+    }
+
+    public void setX(float x){
+        pos.x = x;
+    }
+
+    public void setY(float y){
+        pos.y = y;
     }
 
     public float getSize(){
@@ -250,6 +244,10 @@ public class Car{
 
     public void setDead(boolean b){
         isDead = b;
+    }
+
+    public boolean isDead(){
+        return isDead;
     }
 
     public float getFitness(float farthest){
