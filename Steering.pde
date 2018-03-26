@@ -9,7 +9,7 @@ int generationTime, genNum, numCars, carsRemaining, survivors;
 static final int WIDTH_BOUND = 400;
 
 void setup(){
-    size(1300, 900, P2D);
+    size(1300, 850, P2D);
     frameRate(60);
     reset();
 }
@@ -30,9 +30,22 @@ void reset(){
     for (int i = 0; i < numCars; i++){
         myCars.add(new Car());
     }
+
+    float obsX = 200;
+    float obsY = 200;
     for (int i = 0; i < 10; i++){
-        obs.add(new Obstacle(random(200, (width - WIDTH_BOUND) - 200), random(200, height-200), random(40, 150)));
+        float s = random(40,150);
+        obs.add(new Obstacle(obsX, obsY, s));
+
+        if (obsX > width - (WIDTH_BOUND + 200)){
+            obsY += 200;
+            obsX = 200;
+        }
+        else{
+            obsX += s + 50;
+        }
     }
+
     for (Car c : myCars){
         c.giveObs(obs);
     }
@@ -69,7 +82,18 @@ void showMenu(){
 }
 
 void displayObstacles(){
-    for (Obstacle o : obs){
+    for (int i = 0; i < obs.size(); i++){
+        Obstacle o = obs.get(i);
+        for (int j = 0; j < obs.size(); j++){
+            Obstacle o1 = obs.get(j);
+            if (j != i){
+                float d = dist(o.getX(), o.getY(), o1.getX(), o1.getY());
+                if (d < o1.getSize()/2 + o.getSize()/2){
+                    o1.repulse();
+                    o.repulse();
+                }
+            }
+        }
         o.display();
         o.bound();
         o.travel();
@@ -107,9 +131,10 @@ void displayText(){
         displayCar.adjustDisplay(true);
         displayCar.setX(width - WIDTH_BOUND/2);
         displayCar.setY(400.0);
-        scale(1.5);
+        displayCar.setAngle(0);
+        //scale(2);
         displayCar.display();
-        scale(1);
+        //scale(1);
 
     }
 }
@@ -139,6 +164,12 @@ void breed(){
     // Add each car to the pool depending on their fitness
     for (Car c : myCars){
         int n = int((c.getFitness(farthest) / maxFit) * 100);
+
+        // If the car has a fitness above 99 percent double its size in the gene
+        // pool.
+        // if (c.getFitness(farthest)/maxFit > 0.99){
+        //     n += n;
+        // }
         for (int i = 0; i < n; i++){
             pool.add(c);
         }

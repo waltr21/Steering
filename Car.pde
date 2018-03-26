@@ -35,7 +35,7 @@ public class Car{
 
         int n = int(random(100));
         // Five percent chance of mutation
-        if (n < 5){
+        if (n < 10){
             int n1 = int(random(100));
             // Fifty percent chance of gaining a sensor or losing a sensor.
             if (n1 > 50){
@@ -46,8 +46,9 @@ public class Car{
                 sensors.add(new Sensor(tempLength, tempRange, tempAngle, tempWeight));
             }
             else{
-                if (sensors.size() > 0)
-                    sensors.remove(sensors.size()-1);
+                if (sensors.size() > 0){
+                    sensors.remove(int(random(0, sensors.size())));
+                }
             }
         }
 
@@ -232,6 +233,10 @@ public class Car{
 
     public void setY(float y){
         pos.y = y;
+    }
+
+    public void setAngle(float a){
+        angle = a;
     }
 
     public float getSize(){

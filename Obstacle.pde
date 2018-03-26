@@ -1,13 +1,14 @@
 public class Obstacle{
     private PVector pos, velocity;
-    private float size, angle, speed, boundRange;
+    private float size, angle, speed, boundRange, repulseTime;
 
     public Obstacle(float x, float y, float s){
         pos = new PVector(x, y);
         size = s;
-        speed = 0.1;
+        speed = 0.2;
         boundRange = 150;
         angle = random(-PI, PI);
+        repulseTime = 0;
     }
 
     /**
@@ -41,6 +42,15 @@ public class Obstacle{
         velocity = PVector.fromAngle(angle);
         velocity.mult(speed);
         pos.add(velocity);
+    }
+
+    public void repulse(){
+        float current = millis();
+        if (current - repulseTime > 500){
+            angle += PI;
+            repulseTime = current;
+        }
+        //System.out.println("Repulse");
     }
 
     /**

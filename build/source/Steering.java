@@ -46,9 +46,22 @@ public void reset(){
     for (int i = 0; i < numCars; i++){
         myCars.add(new Car());
     }
+
+    float obsX = 200;
+    float obsY = 200;
     for (int i = 0; i < 10; i++){
-        obs.add(new Obstacle(random(200, (width - WIDTH_BOUND) - 200), random(200, height-200), random(40, 150)));
+        float s = random(40,150);
+        obs.add(new Obstacle(obsX, obsY, s));
+
+        if (obsX > width - (WIDTH_BOUND + 200)){
+            obsY += 200;
+            obsX = 200;
+        }
+        else{
+            obsX += s + 50;
+        }
     }
+
     for (Car c : myCars){
         c.giveObs(obs);
     }
@@ -57,7 +70,7 @@ public void reset(){
 
 public void draw(){
     background(51,51,51);
-    displayCars();
+    //displayCars();
     displayObstacles();
     detectHit();
     showMenu();
@@ -85,7 +98,18 @@ public void showMenu(){
 }
 
 public void displayObstacles(){
-    for (Obstacle o : obs){
+    for (int i = 0; i < obs.size(); i++){
+        Obstacle o = obs.get(i);
+        for (int j = 0; j < obs.size(); j++){
+            Obstacle o1 = obs.get(j);
+            if (j != i){
+                float d = dist(o.getX(), o.getY(), o1.getX(), o1.getY());
+                if (d < o1.getSize()/2 + o.getSize()/2){
+                    o1.repulse();
+                    o.repulse();
+                }
+            }
+        }
         o.display();
         o.bound();
         o.travel();
@@ -123,9 +147,10 @@ public void displayText(){
         displayCar.adjustDisplay(true);
         displayCar.setX(width - WIDTH_BOUND/2);
         displayCar.setY(400.0f);
-        scale(1.5f);
+        displayCar.setAngle(0);
+        //scale(2);
         displayCar.display();
-        scale(1);
+        //scale(1);
 
     }
 }
@@ -155,6 +180,12 @@ public void breed(){
     // Add each car to the pool depending on their fitness
     for (Car c : myCars){
         int n = PApplet.parseInt((c.getFitness(farthest) / maxFit) * 100);
+
+        // If the car has a fitness above 99 percent double its size in the gene
+        // pool.
+        // if (c.getFitness(farthest)/maxFit > 0.99){
+        //     n += n;
+        // }
         for (int i = 0; i < n; i++){
             pool.add(c);
         }
@@ -249,7 +280,7 @@ public class Car{
 
         int n = PApplet.parseInt(random(100));
         // Five percent chance of mutation
-        if (n < 5){
+        if (n < 10){
             int n1 = PApplet.parseInt(random(100));
             // Fifty percent chance of gaining a sensor or losing a sensor.
             if (n1 > 50){
@@ -260,8 +291,9 @@ public class Car{
                 sensors.add(new Sensor(tempLength, tempRange, tempAngle, tempWeight));
             }
             else{
-                if (sensors.size() > 0)
-                    sensors.remove(sensors.size()-1);
+                if (sensors.size() > 0){
+                    sensors.remove(PApplet.parseInt(random(0, sensors.size())));
+                }
             }
         }
 
@@ -448,6 +480,10 @@ public class Car{
         pos.y = y;
     }
 
+    public void setAngle(float a){
+        angle = a;
+    }
+
     public float getSize(){
         return size;
     }
@@ -495,14 +531,15 @@ public class Car{
 }
 public class Obstacle{
     private PVector pos, velocity;
-    private float size, angle, speed, boundRange;
+    private float size, angle, speed, boundRange, repulseTime;
 
     public Obstacle(float x, float y, float s){
         pos = new PVector(x, y);
         size = s;
-        speed = 0.1f;
+        speed = 0.2f;
         boundRange = 150;
         angle = random(-PI, PI);
+        repulseTime = 0;
     }
 
     /**
@@ -536,6 +573,15 @@ public class Obstacle{
         velocity = PVector.fromAngle(angle);
         velocity.mult(speed);
         pos.add(velocity);
+    }
+
+    public void repulse(){
+        float current = millis();
+        if (current - repulseTime > 500){
+            angle += PI;
+            repulseTime = current;
+        }
+        //System.out.println("Repulse");
     }
 
     /**
@@ -598,7 +644,7 @@ public class Sensor{
 
     /**
      * Gives the desired angle and weight the sensor wants to turn.
-     * @return [description]
+     * @return desired angle for the car to to turn to.
      */
     public AngleWeight getDesiredAngle(){
         float min = 999999;
@@ -632,6 +678,10 @@ public class Sensor{
         }
     }
 
+    /**
+     * Creates a copy of the sensor object without reference.
+     * @return copy of the sensor.
+     */
     public Sensor copy(){
         return new Sensor(length, range, angle, weight);
     }
@@ -672,7 +722,7 @@ public class Sensor{
         popMatrix();
     }
 }
-  public void settings() {  size(1300, 900, P2D); }
+  public void settings() {  size(1300, 850, P2D); }
   static public void main(String[] passedArgs) {
     String[] appletArgs = new String[] { "Steering" };
     if (passedArgs != null) {
