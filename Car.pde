@@ -54,6 +54,33 @@ public class Car{
 
     }
 
+    public Car(ArrayList<Sensor> parentSensors){
+        initVariables();
+        for (Sensor s : parentSensors){
+            sensors.add(s.copy());
+        }
+
+        int n = int(random(100));
+        // Ten percent chance of mutation
+        if (n < 10){
+            int n1 = int(random(100));
+            // Fifty percent chance of gaining a sensor or losing a sensor.
+            if (n1 > 50){
+                float tempLength = random(30, 150);
+                float tempRange = random(10, 80);
+                float tempAngle = random(-PI,PI);
+                float tempWeight = random(0, 4);
+                sensors.add(new Sensor(tempLength, tempRange, tempAngle, tempWeight));
+            }
+            else{
+                if (sensors.size() > 0){
+                    sensors.remove(int(random(0, sensors.size())));
+                }
+            }
+        }
+
+    }
+
     public void initVariables(){
         pos = new PVector(0, 0);
         size = 20;

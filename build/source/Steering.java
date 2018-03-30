@@ -17,7 +17,6 @@ public class Steering extends PApplet {
 ArrayList<Car> myCars;
 Car displayCar, currentFit;
 ArrayList<Obstacle> obs;
-float turn = 0;
 long timeStamp;
 float maxFit;
 boolean showSensor;
@@ -49,7 +48,7 @@ public void reset(){
 
     float obsX = 200;
     float obsY = 200;
-    for (int i = 0; i < 10; i++){
+    for (int i = 0; i < 8; i++){
         float s = random(40,150);
         obs.add(new Obstacle(obsX, obsY, s));
 
@@ -70,24 +69,20 @@ public void reset(){
 
 public void draw(){
     background(51,51,51);
-    //displayCars();
+    displayCars();
     displayObstacles();
     detectHit();
     showMenu();
     displayText();
-    //timeGeneration();
+    timeGeneration();
 }
 
 public void displayCars(){
-    if (myCars.size() > 0)
-        myCars.get(0).turn(turn);
-
     for (Car c : myCars){
         c.display();
         c.travel();
         c.bound();
     }
-    timeGeneration();
 }
 
 public void showMenu(){
@@ -162,12 +157,16 @@ public void timeGeneration(){
         timeStamp = tempTime;
         survivors = carsRemaining;
         displayCar = new Car(currentFit);
-        breed();
+        breed2();
         maxFit = 0;
+        showSensor = false;
         carsRemaining = numCars;
     }
 }
 
+/**
+ * Cars are put into a breeding pool.
+ */
 public void breed(){
     // Find the car who stayed the farthest away from the obstacles and get that value
     float farthest = 0;
@@ -204,6 +203,47 @@ public void breed(){
     }
 }
 
+/**
+ * Sensors are put into a breeding pool.
+ */
+public void breed2(){
+    float farthest = 0;
+    for (Car c : myCars){
+        if (c.getClosest() > farthest)
+            farthest = c.getClosest();
+    }
+    ArrayList<Sensor> sensorPool = new ArrayList<Sensor>();
+    ArrayList<Integer> numPool = new ArrayList<Integer>();
+
+    for (Car c : myCars){
+        int n = PApplet.parseInt((c.getFitness(farthest) / maxFit) * 100);
+
+        for (int i = 0; i < n; i++){
+            numPool.add(c.getSensors().size());
+            for (Sensor s : c.getSensors()){
+                sensorPool.add(s);
+            }
+        }
+    }
+
+    myCars.clear();
+
+
+    for (int i = 0; i < numCars; i++){
+        int r = PApplet.parseInt(random(0, numPool.size() - 2));
+        int numSensors = numPool.get(r);
+        ArrayList<Sensor> newSensors = new ArrayList<Sensor>();
+        for (int n = 0; n < numSensors; n++){
+            int randPos = PApplet.parseInt(random(0, sensorPool.size() - 2));
+            newSensors.add(sensorPool.get(randPos));
+        }
+        Car newCar = new Car(newSensors);
+        newCar.giveObs(obs);
+        myCars.add(newCar);
+    }
+
+}
+
 public void detectHit(){
     for (int i = myCars.size() - 1; i >= 0; i--){
         Car c = myCars.get(i);
@@ -220,14 +260,6 @@ public void detectHit(){
 }
 
 public void keyPressed(){
-    if (keyCode == LEFT){
-        turn = -0.1f;
-    }
-
-    if (keyCode == RIGHT){
-        turn = 0.1f;
-    }
-
     if (keyCode == ENTER)
         reset();
 
@@ -238,10 +270,6 @@ public void keyPressed(){
         }
     }
 
-}
-
-public void keyReleased(){
-    turn = 0;
 }
 public class Car{
     private PVector pos;
@@ -280,6 +308,33 @@ public class Car{
 
         int n = PApplet.parseInt(random(100));
         // Five percent chance of mutation
+        if (n < 10){
+            int n1 = PApplet.parseInt(random(100));
+            // Fifty percent chance of gaining a sensor or losing a sensor.
+            if (n1 > 50){
+                float tempLength = random(30, 150);
+                float tempRange = random(10, 80);
+                float tempAngle = random(-PI,PI);
+                float tempWeight = random(0, 4);
+                sensors.add(new Sensor(tempLength, tempRange, tempAngle, tempWeight));
+            }
+            else{
+                if (sensors.size() > 0){
+                    sensors.remove(PApplet.parseInt(random(0, sensors.size())));
+                }
+            }
+        }
+
+    }
+
+    public Car(ArrayList<Sensor> parentSensors){
+        initVariables();
+        for (Sensor s : parentSensors){
+            sensors.add(s.copy());
+        }
+
+        int n = PApplet.parseInt(random(100));
+        // Ten percent chance of mutation
         if (n < 10){
             int n1 = PApplet.parseInt(random(100));
             // Fifty percent chance of gaining a sensor or losing a sensor.

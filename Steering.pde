@@ -1,7 +1,6 @@
 ArrayList<Car> myCars;
 Car displayCar, currentFit;
 ArrayList<Obstacle> obs;
-float turn = 0;
 long timeStamp;
 float maxFit;
 boolean showSensor;
@@ -33,7 +32,7 @@ void reset(){
 
     float obsX = 200;
     float obsY = 200;
-    for (int i = 0; i < 10; i++){
+    for (int i = 0; i < 8; i++){
         float s = random(40,150);
         obs.add(new Obstacle(obsX, obsY, s));
 
@@ -59,19 +58,15 @@ void draw(){
     detectHit();
     showMenu();
     displayText();
-    //timeGeneration();
+    timeGeneration();
 }
 
 void displayCars(){
-    if (myCars.size() > 0)
-        myCars.get(0).turn(turn);
-
     for (Car c : myCars){
         c.display();
         c.travel();
         c.bound();
     }
-    timeGeneration();
 }
 
 void showMenu(){
@@ -146,12 +141,16 @@ void timeGeneration(){
         timeStamp = tempTime;
         survivors = carsRemaining;
         displayCar = new Car(currentFit);
-        breed();
+        breed2();
         maxFit = 0;
+        showSensor = false;
         carsRemaining = numCars;
     }
 }
 
+/**
+ * Cars are put into a breeding pool.
+ */
 void breed(){
     // Find the car who stayed the farthest away from the obstacles and get that value
     float farthest = 0;
@@ -188,6 +187,47 @@ void breed(){
     }
 }
 
+/**
+ * Sensors are put into a breeding pool.
+ */
+void breed2(){
+    float farthest = 0;
+    for (Car c : myCars){
+        if (c.getClosest() > farthest)
+            farthest = c.getClosest();
+    }
+    ArrayList<Sensor> sensorPool = new ArrayList<Sensor>();
+    ArrayList<Integer> numPool = new ArrayList<Integer>();
+
+    for (Car c : myCars){
+        int n = int((c.getFitness(farthest) / maxFit) * 100);
+
+        for (int i = 0; i < n; i++){
+            numPool.add(c.getSensors().size());
+            for (Sensor s : c.getSensors()){
+                sensorPool.add(s);
+            }
+        }
+    }
+
+    myCars.clear();
+
+
+    for (int i = 0; i < numCars; i++){
+        int r = int(random(0, numPool.size() - 2));
+        int numSensors = numPool.get(r);
+        ArrayList<Sensor> newSensors = new ArrayList<Sensor>();
+        for (int n = 0; n < numSensors; n++){
+            int randPos = int(random(0, sensorPool.size() - 2));
+            newSensors.add(sensorPool.get(randPos));
+        }
+        Car newCar = new Car(newSensors);
+        newCar.giveObs(obs);
+        myCars.add(newCar);
+    }
+
+}
+
 void detectHit(){
     for (int i = myCars.size() - 1; i >= 0; i--){
         Car c = myCars.get(i);
@@ -204,14 +244,6 @@ void detectHit(){
 }
 
 void keyPressed(){
-    if (keyCode == LEFT){
-        turn = -0.1;
-    }
-
-    if (keyCode == RIGHT){
-        turn = 0.1;
-    }
-
     if (keyCode == ENTER)
         reset();
 
@@ -222,8 +254,4 @@ void keyPressed(){
         }
     }
 
-}
-
-void keyReleased(){
-    turn = 0;
 }
