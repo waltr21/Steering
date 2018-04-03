@@ -157,7 +157,7 @@ public void timeGeneration(){
         timeStamp = tempTime;
         survivors = carsRemaining;
         displayCar = new Car(currentFit);
-        breed2();
+        breed();
         maxFit = 0;
         showSensor = false;
         carsRemaining = numCars;
@@ -165,7 +165,7 @@ public void timeGeneration(){
 }
 
 /**
- * Cars are put into a breeding pool.
+ * Creates a new generation of cars based on the fitness of the previous generation.
  */
 public void breed(){
     // Find the car who stayed the farthest away from the obstacles and get that value
