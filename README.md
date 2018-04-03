@@ -9,3 +9,6 @@ Cars are always traveling forward, but they are also given the ability to turn l
 
 ## Evolution:
 Cars are sent into the world with a time limit of X seconds. If the time limit finishes, or all of the cars have crashed, the current generation is finished and the cars are breeded for the next generation of drivers. To determine how the cars will reproduce, each car keeps track of their own fitness score. This is determined by the overall distance the car traveled multiplied by how close the car came to an obstacle in respect to all of the other cars in the simulation: distanceTraveled * (closest/farthest). Farthest represents the largest distance a car in the simulation has kept from the obstacles. Once the fitness of each car is calculated, a pool of cars is created for the new generation to be created from. How many copies of each car put in the pool is determined by: (carFitness/maxFit) * 100. The new generation randomly selects one parent from the pool and copies their genes (sensors). Each new car is given a 10% mutation rate. A mutation can cause a car to grow a new sensor, or to remove a current one (50/50 chance of each). 
+
+
+![Alt text](/waltr21/Steering/blob/master/Screenshots/Screen%20Shot%202018-04-03%20at%204.45.16%20PM.png?raw=true "Optional Title")
