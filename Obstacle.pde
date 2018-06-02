@@ -2,6 +2,12 @@ public class Obstacle{
     private PVector pos, velocity;
     private float size, angle, speed, boundRange, repulseTime;
 
+    /**
+     * Constructor for the Obstacle class.
+     * @param x Starting X pos
+     * @param y Starting Y pos
+     * @param s Size of the obstacle.
+     */
     public Obstacle(float x, float y, float s){
         pos = new PVector(x, y);
         size = s;
@@ -44,13 +50,15 @@ public class Obstacle{
         pos.add(velocity);
     }
 
+    /**
+     * Send the obstacle in the other direction when called.
+     */
     public void repulse(){
         float current = millis();
         if (current - repulseTime > 500){
             angle += PI;
             repulseTime = current;
         }
-        //System.out.println("Repulse");
     }
 
     /**

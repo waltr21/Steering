@@ -1,7 +1,7 @@
 public class Car{
     private PVector pos;
     private float angle, acceleration, size, rate, maxSpeed, maxTurnRad;
-    private float distanceTraveled, closetCall;
+    private float distanceTraveled, closetCall, numFrames, totalDistances;
     private boolean displaySensor, isDead;
     private ArrayList<Sensor> sensors;
     private ArrayList<Obstacle> obs;
@@ -23,9 +23,9 @@ public class Car{
     }
 
     /**
-     * Constructor for the car class that passes down the sensors from the
-     * parent class.
-     * @param parentSensors ArrayList of sensors from the parent.
+     * Constructor for the car that passes through a parent Car for the new car
+     * to copy.
+     * @param parent [description]
      */
     public Car(Car parent){
         initVariables();
@@ -54,6 +54,11 @@ public class Car{
 
     }
 
+    /**
+     * Constructor for the car class that passes down the sensors from the
+     * parent car.
+     * @param parentSensors ArrayList of sensors from the parent.
+     */
     public Car(ArrayList<Sensor> parentSensors){
         initVariables();
         for (Sensor s : parentSensors){
@@ -81,6 +86,9 @@ public class Car{
 
     }
 
+    /**
+     * Initializes the variables for the car.
+     */
     public void initVariables(){
         pos = new PVector(0, 0);
         size = 20;
@@ -93,6 +101,7 @@ public class Car{
         distanceTraveled = 0;
         closetCall = 999999;
         rate = 0.05;
+        numFrames = 0;
         sensors = new ArrayList<Sensor>();
         obs = new ArrayList<Obstacle>();
     }
@@ -128,7 +137,8 @@ public class Car{
             // a better fitness score)
             distanceTraveled += acceleration;
 
-            calculateClosest();
+            //calculateClosest();
+            calculateNewFitness();
         }
     }
 
@@ -242,30 +252,78 @@ public class Car{
         }
     }
 
+    public void calculateNewFitness(){
+        float min = 999999;
+        numFrames++;
+        for (Obstacle o : obs){
+            float tempDistance = dist(o.getX(), o.getY(), pos.x, pos.y);
+            if (tempDistance < min)
+                min = tempDistance;
+        }
+
+        if (min < 999999)
+            totalDistances += min;
+    }
+
+    public float getNewFitness(){
+        if (isDead)
+            return 1;
+        
+        return totalDistances / numFrames;
+    }
+
+    /**
+     * Turns the display of the sensors on/off.
+     * @param b True for on, False for off.
+     */
     public void adjustDisplay(boolean b){
         displaySensor = b;
     }
 
+    /**
+     * Returns the current X pos of the car.
+     * @return Float of the X pos
+     */
     public float getX(){
         return pos.x;
     }
 
+    /**
+     * Returns the current Y pos of the car.
+     * @return Float of the Y pos
+     */
     public float getY(){
         return pos.y;
     }
 
+    /**
+     * Set the X position for the car.
+     * @param x Float to set to set the X position
+     */
     public void setX(float x){
         pos.x = x;
     }
 
+    /**
+     * Set the Y position for the car.
+     * @param y Float to set to set the Y position
+     */
     public void setY(float y){
         pos.y = y;
     }
 
+    /**
+     * Set the angle of the car.
+     * @param a Float to set the angle.
+     */
     public void setAngle(float a){
         angle = a;
     }
 
+    /**
+     * [getSize description]
+     * @return [description]
+     */
     public float getSize(){
         return size;
     }

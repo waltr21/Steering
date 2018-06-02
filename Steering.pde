@@ -79,6 +79,8 @@ void showMenu(){
 void displayObstacles(){
     for (int i = 0; i < obs.size(); i++){
         Obstacle o = obs.get(i);
+
+        //Repulse obstacles off each other so they do not overlap.
         for (int j = 0; j < obs.size(); j++){
             Obstacle o1 = obs.get(j);
             if (j != i){
@@ -97,14 +99,17 @@ void displayObstacles(){
 
 void displayText(){
     // Find out best fit car.
-    float farthest = 0;
+    // float farthest = 0;
+    // for (Car c : myCars){
+    //     if (c.getClosest() > farthest)
+    //         farthest = c.getClosest();
+    // }
+    //
+    float tempFit = 0;
     for (Car c : myCars){
-        if (c.getClosest() > farthest)
-            farthest = c.getClosest();
-    }
-    for (Car c : myCars){
-        if (c.getFitness(farthest) > maxFit){
-            maxFit = c.getFitness(farthest);
+        if (c.getNewFitness() > tempFit){
+            maxFit = c.getNewFitness();
+            tempFit = c.getNewFitness();
             currentFit = c;
         }
     }
@@ -152,29 +157,32 @@ void timeGeneration(){
  * Creates a new generation of cars based on the fitness of the previous generation.
  */
 void breed(){
-    // Find the car who stayed the farthest away from the obstacles and get that value
-    float farthest = 0;
-    for (Car c : myCars){
-        if (c.getClosest() > farthest)
-            farthest = c.getClosest();
-    }
+    // Find the car who stayed the farthest away from the obstacles and get that value.
+    // This value is used to calculate the fitness of each car.
+    // float farthest = 0;
+    // for (Car c : myCars){
+    //     if (c.getClosest() > farthest)
+    //         farthest = c.getClosest();
+    // }
+
     ArrayList<Car> pool = new ArrayList<Car>();
 
     // Add each car to the pool depending on their fitness
     for (Car c : myCars){
-        int n = int((c.getFitness(farthest) / maxFit) * 100);
+        int n = int((c.getNewFitness() / maxFit) * 100);
 
         // If the car has a fitness above 99 percent double its size in the gene
         // pool.
-        // if (c.getFitness(farthest)/maxFit > 0.99){
-        //     n += n;
-        // }
+        if (c.getNewFitness() / maxFit > 0.99){
+            n += n;
+        }
+
         for (int i = 0; i < n; i++){
             pool.add(c);
         }
     }
 
-    // Clear the old cars
+    // Delete all of the old cars.
     myCars.clear();
 
     // Pick a random position in the pool and create a new child car from the
@@ -191,6 +199,8 @@ void breed(){
  * Sensors are put into a breeding pool.
  */
 void breed2(){
+    // Find the car who stayed the farthest away from the obstacles and get that value.
+    // This value is used to calculate the fitness of each car.
     float farthest = 0;
     for (Car c : myCars){
         if (c.getClosest() > farthest)
@@ -199,6 +209,7 @@ void breed2(){
     ArrayList<Sensor> sensorPool = new ArrayList<Sensor>();
     ArrayList<Integer> numPool = new ArrayList<Integer>();
 
+    // Add each sensor to the pool X amount of times depending on the cars fitness.
     for (Car c : myCars){
         int n = int((c.getFitness(farthest) / maxFit) * 100);
 
@@ -212,7 +223,8 @@ void breed2(){
 
     myCars.clear();
 
-
+    // Select a random num of sensors (depending on the num pool) for the new car to
+    // have.
     for (int i = 0; i < numCars; i++){
         int r = int(random(0, numPool.size() - 2));
         int numSensors = numPool.get(r);

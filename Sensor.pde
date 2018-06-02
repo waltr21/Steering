@@ -97,7 +97,8 @@ public class Sensor{
         pushMatrix();
         translate(sensorX, sensorY);
         noFill();
-        stroke(94, 155, 255);
+        float c = 255 - (255 * (weight/4));
+        stroke(c, c, 255);
         ellipseMode(CENTER);
         if (ds)
             ellipse(0, 0, range, range);

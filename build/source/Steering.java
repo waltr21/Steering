@@ -95,6 +95,8 @@ public void showMenu(){
 public void displayObstacles(){
     for (int i = 0; i < obs.size(); i++){
         Obstacle o = obs.get(i);
+
+        //Repulse obstacles off each other so they do not overlap.
         for (int j = 0; j < obs.size(); j++){
             Obstacle o1 = obs.get(j);
             if (j != i){
@@ -113,14 +115,17 @@ public void displayObstacles(){
 
 public void displayText(){
     // Find out best fit car.
-    float farthest = 0;
+    // float farthest = 0;
+    // for (Car c : myCars){
+    //     if (c.getClosest() > farthest)
+    //         farthest = c.getClosest();
+    // }
+    //
+    float tempFit = 0;
     for (Car c : myCars){
-        if (c.getClosest() > farthest)
-            farthest = c.getClosest();
-    }
-    for (Car c : myCars){
-        if (c.getFitness(farthest) > maxFit){
-            maxFit = c.getFitness(farthest);
+        if (c.getNewFitness() > tempFit){
+            maxFit = c.getNewFitness();
+            tempFit = c.getNewFitness();
             currentFit = c;
         }
     }
@@ -168,29 +173,32 @@ public void timeGeneration(){
  * Creates a new generation of cars based on the fitness of the previous generation.
  */
 public void breed(){
-    // Find the car who stayed the farthest away from the obstacles and get that value
-    float farthest = 0;
-    for (Car c : myCars){
-        if (c.getClosest() > farthest)
-            farthest = c.getClosest();
-    }
+    // Find the car who stayed the farthest away from the obstacles and get that value.
+    // This value is used to calculate the fitness of each car.
+    // float farthest = 0;
+    // for (Car c : myCars){
+    //     if (c.getClosest() > farthest)
+    //         farthest = c.getClosest();
+    // }
+
     ArrayList<Car> pool = new ArrayList<Car>();
 
     // Add each car to the pool depending on their fitness
     for (Car c : myCars){
-        int n = PApplet.parseInt((c.getFitness(farthest) / maxFit) * 100);
+        int n = PApplet.parseInt((c.getNewFitness() / maxFit) * 100);
 
         // If the car has a fitness above 99 percent double its size in the gene
         // pool.
-        // if (c.getFitness(farthest)/maxFit > 0.99){
-        //     n += n;
-        // }
+        if (c.getNewFitness() / maxFit > 0.99f){
+            n += n;
+        }
+
         for (int i = 0; i < n; i++){
             pool.add(c);
         }
     }
 
-    // Clear the old cars
+    // Delete all of the old cars.
     myCars.clear();
 
     // Pick a random position in the pool and create a new child car from the
@@ -207,6 +215,8 @@ public void breed(){
  * Sensors are put into a breeding pool.
  */
 public void breed2(){
+    // Find the car who stayed the farthest away from the obstacles and get that value.
+    // This value is used to calculate the fitness of each car.
     float farthest = 0;
     for (Car c : myCars){
         if (c.getClosest() > farthest)
@@ -215,6 +225,7 @@ public void breed2(){
     ArrayList<Sensor> sensorPool = new ArrayList<Sensor>();
     ArrayList<Integer> numPool = new ArrayList<Integer>();
 
+    // Add each sensor to the pool X amount of times depending on the cars fitness.
     for (Car c : myCars){
         int n = PApplet.parseInt((c.getFitness(farthest) / maxFit) * 100);
 
@@ -228,7 +239,8 @@ public void breed2(){
 
     myCars.clear();
 
-
+    // Select a random num of sensors (depending on the num pool) for the new car to
+    // have.
     for (int i = 0; i < numCars; i++){
         int r = PApplet.parseInt(random(0, numPool.size() - 2));
         int numSensors = numPool.get(r);
@@ -274,7 +286,7 @@ public void keyPressed(){
 public class Car{
     private PVector pos;
     private float angle, acceleration, size, rate, maxSpeed, maxTurnRad;
-    private float distanceTraveled, closetCall;
+    private float distanceTraveled, closetCall, numFrames, totalDistances;
     private boolean displaySensor, isDead;
     private ArrayList<Sensor> sensors;
     private ArrayList<Obstacle> obs;
@@ -296,9 +308,9 @@ public class Car{
     }
 
     /**
-     * Constructor for the car class that passes down the sensors from the
-     * parent class.
-     * @param parentSensors ArrayList of sensors from the parent.
+     * Constructor for the car that passes through a parent Car for the new car
+     * to copy.
+     * @param parent [description]
      */
     public Car(Car parent){
         initVariables();
@@ -327,6 +339,11 @@ public class Car{
 
     }
 
+    /**
+     * Constructor for the car class that passes down the sensors from the
+     * parent car.
+     * @param parentSensors ArrayList of sensors from the parent.
+     */
     public Car(ArrayList<Sensor> parentSensors){
         initVariables();
         for (Sensor s : parentSensors){
@@ -354,6 +371,9 @@ public class Car{
 
     }
 
+    /**
+     * Initializes the variables for the car.
+     */
     public void initVariables(){
         pos = new PVector(0, 0);
         size = 20;
@@ -366,6 +386,7 @@ public class Car{
         distanceTraveled = 0;
         closetCall = 999999;
         rate = 0.05f;
+        numFrames = 0;
         sensors = new ArrayList<Sensor>();
         obs = new ArrayList<Obstacle>();
     }
@@ -401,7 +422,8 @@ public class Car{
             // a better fitness score)
             distanceTraveled += acceleration;
 
-            calculateClosest();
+            //calculateClosest();
+            calculateNewFitness();
         }
     }
 
@@ -515,30 +537,78 @@ public class Car{
         }
     }
 
+    public void calculateNewFitness(){
+        float min = 999999;
+        numFrames++;
+        for (Obstacle o : obs){
+            float tempDistance = dist(o.getX(), o.getY(), pos.x, pos.y);
+            if (tempDistance < min)
+                min = tempDistance;
+        }
+
+        if (min < 999999)
+            totalDistances += min;
+    }
+
+    public float getNewFitness(){
+        if (isDead)
+            return 1;
+        
+        return totalDistances / numFrames;
+    }
+
+    /**
+     * Turns the display of the sensors on/off.
+     * @param b True for on, False for off.
+     */
     public void adjustDisplay(boolean b){
         displaySensor = b;
     }
 
+    /**
+     * Returns the current X pos of the car.
+     * @return Float of the X pos
+     */
     public float getX(){
         return pos.x;
     }
 
+    /**
+     * Returns the current Y pos of the car.
+     * @return Float of the Y pos
+     */
     public float getY(){
         return pos.y;
     }
 
+    /**
+     * Set the X position for the car.
+     * @param x Float to set to set the X position
+     */
     public void setX(float x){
         pos.x = x;
     }
 
+    /**
+     * Set the Y position for the car.
+     * @param y Float to set to set the Y position
+     */
     public void setY(float y){
         pos.y = y;
     }
 
+    /**
+     * Set the angle of the car.
+     * @param a Float to set the angle.
+     */
     public void setAngle(float a){
         angle = a;
     }
 
+    /**
+     * [getSize description]
+     * @return [description]
+     */
     public float getSize(){
         return size;
     }
@@ -588,6 +658,12 @@ public class Obstacle{
     private PVector pos, velocity;
     private float size, angle, speed, boundRange, repulseTime;
 
+    /**
+     * Constructor for the Obstacle class.
+     * @param x Starting X pos
+     * @param y Starting Y pos
+     * @param s Size of the obstacle.
+     */
     public Obstacle(float x, float y, float s){
         pos = new PVector(x, y);
         size = s;
@@ -630,13 +706,15 @@ public class Obstacle{
         pos.add(velocity);
     }
 
+    /**
+     * Send the obstacle in the other direction when called.
+     */
     public void repulse(){
         float current = millis();
         if (current - repulseTime > 500){
             angle += PI;
             repulseTime = current;
         }
-        //System.out.println("Repulse");
     }
 
     /**
@@ -770,7 +848,8 @@ public class Sensor{
         pushMatrix();
         translate(sensorX, sensorY);
         noFill();
-        stroke(94, 155, 255);
+        float c = 255 - (255 * (weight/4));
+        stroke(c, c, 255);
         ellipseMode(CENTER);
         if (ds)
             ellipse(0, 0, range, range);
